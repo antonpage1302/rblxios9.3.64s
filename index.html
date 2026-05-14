@@ -1,0 +1,347 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Strict//EN" "w3.org">
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Roblox Mobile - Full Core GUI</title>
+    <style type="text/css">
+        body, form {
+            background-color: #a3dcff;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+            width: 100%;
+            height: 100%;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+        }
+
+        .joy-trigger {
+            display: none;
+        }
+
+        /* 3D Сцена */
+        .roblox-studio {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            perspective: 500px;
+            -webkit-perspective: 500px;
+        }
+
+        /* Камера */
+        .camera-view {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            transform: rotateX(-35deg) rotateY(45deg) translate3d(0, 0, 0);
+            -webkit-transform: rotateX(-35deg) rotateY(45deg) translate3d(0, 0, 0);
+            transition: transform 0.3s ease-out;
+            -webkit-transition: -webkit-transform 0.3s ease-out;
+        }
+
+        /* Карта Baseplate */
+        .baseplate {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 600px;
+            height: 600px;
+            margin-top: -300px;
+            margin-left: -300px;
+            background: #969696;
+            border: 4px solid #7c7c7c;
+            background-image: -webkit-linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), -webkit-linear-gradient(0deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            -webkit-background-size: 25px 25px;
+            transform: rotateX(90deg);
+            -webkit-transform: rotateX(90deg);
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+        }
+
+        /* Персонаж Нубик */
+        .noob-character {
+            position: absolute;
+            top: 280px;
+            left: 290px;
+            width: 20px;
+            height: 40px;
+            transform: rotateX(-90deg) translateZ(20px);
+            -webkit-transform: rotateX(-90deg) translateZ(20px);
+            transform-style: preserve-3d;
+            -webkit-transform-style: preserve-3d;
+            transition: transform 0.15s ease-out;
+            -webkit-transition: -webkit-transform 0.15s ease-out;
+        }
+
+        .limb { 
+            position: absolute; 
+            border: 1px solid rgba(0,0,0,0.3); 
+            transition: transform 0.15s;
+            -webkit-transition: -webkit-transform 0.15s;
+        }
+        .n-head { width: 12px; height: 12px; background: #eedc00; top: -14px; left: 4px; }
+        .n-torso { width: 20px; height: 24px; background: #0055a5; top: 0; left: 0; }
+        .n-arm-l { width: 6px; height: 22px; background: #eedc00; top: 0; left: -7px; }
+        .n-arm-r { width: 6px; height: 22px; background: #eedc00; top: 0; right: -7px; }
+        .n-leg-l { width: 9px; height: 22px; background: #4b974a; bottom: -22px; left: 0; }
+        .n-leg-r { width: 9px; height: 22px; background: #4b974a; bottom: -22px; right: 0; }
+
+        /* ВЕРХНИЙ ИНТЕРФЕЙС (Core GUI) */
+        .top-bar {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            z-index: 1000;
+            height: 32px;
+        }
+
+        /* Квадратный логотип-шеврон Roblox */
+        .roblox-logo {
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background: #fff;
+            border: 4px solid #000;
+            transform: rotate(-15deg);
+            -webkit-transform: rotate(-15deg);
+            margin-right: 15px;
+            position: relative;
+        }
+        /* Дырочка внутри логотипа */
+        .roblox-logo:after {
+            content: '';
+            position: absolute;
+            top: 7px;
+            left: 7px;
+            width: 10px;
+            height: 10px;
+            background: #a3dcff; /* Под цвет неба */
+        }
+
+        /* Кнопка чата */
+        .chat-btn {
+            display: inline-block;
+            width: 32px;
+            height: 32px;
+            background: rgba(0, 0, 0, 0.5);
+            border-radius: 6px;
+            vertical-align: top;
+            position: relative;
+            cursor: pointer;
+        }
+        /* Иконка сообщения в кнопке чата */
+        .chat-icon {
+            position: absolute;
+            top: 10px;
+            left: 8px;
+            width: 16px;
+            height: 10px;
+            background: #fff;
+            border-radius: 2px;
+        }
+        .chat-icon:after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 3px;
+            width: 0;
+            height: 0;
+            border-style: solid;
+            border-width: 4px 4px 0 0;
+            border-color: #fff transparent transparent transparent;
+        }
+
+        /* КНОПКА ПРЫЖКА (JUMP) */
+        .jump-btn-zone {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            width: 70px;
+            height: 70px;
+            z-index: 500;
+        }
+
+        .jump-btn {
+            position: absolute;
+            width: 70px;
+            height: 70px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 3px solid rgba(255, 255, 255, 0.5);
+            border-radius: 50%;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+
+        .jump-icon {
+            position: absolute;
+            top: 20px;
+            left: 25px;
+            width: 14px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.8);
+            border-bottom: none;
+        }
+        .jump-icon:after {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 2px;
+            width: 6px;
+            height: 6px;
+            background: rgba(255,255,255,0.8);
+            border-radius: 50%;
+        }
+
+        /* МЕХАНИКА ПРЫЖКА И АНИМАЦИИ */
+        .jump-btn-zone:active ~ .roblox-studio .noob-character {
+            transform: rotateX(-90deg) translateZ(65px);
+            -webkit-transform: rotateX(-90deg) translateZ(65px);
+        }
+        .jump-btn-zone:active ~ .roblox-studio .n-leg-l { transform: rotate(25deg); -webkit-transform: rotate(25deg); }
+        .jump-btn-zone:active ~ .roblox-studio .n-leg-r { transform: rotate(-25deg); -webkit-transform: rotate(-25deg); }
+        .jump-btn-zone:active ~ .jump-btn { background: rgba(0, 0, 0, 0.6); }
+
+        /* ИНТЕРФЕЙС РОБЛОКС ДЖОЙСТИКА (8 НАПРАВЛЕНИЙ) */
+        .joystick-zone {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            width: 120px;
+            height: 120px;
+            z-index: 500;
+        }
+
+        .joystick-base {
+            position: absolute;
+            width: 120px;
+            height: 120px;
+            background: rgba(0, 0, 0, 0.25);
+            border: 4px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            box-sizing: border-box;
+        }
+
+        .joystick-stick {
+            position: absolute;
+            top: 36px;
+            left: 36px;
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.75);
+            border-radius: 50%;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+            transition: transform 0.15s ease-out;
+            -webkit-transition: -webkit-transform 0.15s ease-out;
+        }
+
+        /* Сетка тач-зон джойстика */
+        .touch-pad {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            z-index: 600;
+            cursor: pointer;
+        }
+
+        .t-nw { top: 0; left: 0; }     .t-n  { top: 0; left: 40px; }     .t-ne { top: 0; right: 0; }
+        .t-w  { top: 40px; left: 0; }  .t-c  { top: 40px; left: 40px; } .t-e  { top: 40px; right: 0; }
+        .t-sw { bottom: 0; left: 0; }  .t-s  { bottom: 0; left: 40px; } .t-se { bottom: 0; right: 0; }
+
+        /* НАПРАВЛЕНИЯ ДВИЖЕНИЯ КАМЕРЫ */
+        #joy-n:checked ~ .roblox-studio .camera-view { transform: rotateX(-35deg) rotateY(45deg) translate3d(120px, 120px, -60px); -webkit-transform: rotateX(-35deg) rotateY(45deg) translate3d(120px, 120px, -60px); }
+        #joy-n:checked ~ .joystick-zone .joystick-stick { transform: translateY(-24px); -webkit-transform: translateY(-24px); }
+
+        #joy-s:checked ~ .roblox-studio .camera-view { transform: rotateX(-35deg) rotateY(45deg) translate3d(-120px, -120px, 60px); -webkit-transform: rotateX(-35deg) rotateY(45deg) translate3d(-120px, -120px, 60px); }
+        #joy-s:checked ~ .joystick-zone .joystick-stick { transform: translateY(24px); -webkit-transform: translateY(24px); }
+
+        #joy-w:checked ~ .roblox-studio .camera-view { transform: rotateX(-35deg) rotateY(15deg) translate3d(0,0,0); -webkit-transform: rotateX(-35deg) rotateY(15deg) translate3d(0,0,0); }
+        #joy-w:checked ~ .joystick-zone .joystick-stick { transform: translateX(-24px); -webkit-transform: translateX(-24px); }
+
+        #joy-e:checked ~ .roblox-studio .camera-view { transform: rotateX(-35deg) rotateY(75deg) translate3d(0,0,0); -webkit-transform: rotateX(-35deg) rotateY(75deg) translate3d(0,0,0); }
+        #joy-e:checked ~ .joystick-zone .joystick-stick { transform: translateX(24px); -webkit-transform: translateX(24px); }
+
+        #joy-nw:checked ~ .roblox-studio .camera-view { transform: rotateX(-35deg) rotateY(30deg) translate3d(70px, 70px, -35px); -webkit-transform: rotateX(-35deg) rotateY(30deg) translate3d(70px, 70px, -35px); }
+        #joy-nw:checked ~ .joystick-zone .joystick-stick { transform: translate3d(-18px, -18px, 0); -webkit-transform: translate3d(-18px, -18px, 0); }
+
+        #joy-ne:checked ~ .roblox-studio .camera-view { transform: rotateX(-35deg) rotateY(60deg) translate3d(70px, 70px, -35px); -webkit-transform: rotateX(-35deg) rotateY(60deg) translate3d(70px, 70px, -35px); }
+        #joy-ne:checked ~ .joystick-zone .joystick-stick { transform: translate3d(18px, -18px, 0); -webkit-transform: translate3d(18px, -18px, 0); }
+
+        #joy-sw:checked ~ .roblox-studio .camera-view { transform: rotateX(-35deg) rotateY(30deg) translate3d(-70px, -70px, 35px); -webkit-transform: rotateX(-35deg) rotateY(30deg) translate3d(-70px, -70px, 35px); }
+        #joy-sw:checked ~ .joystick-zone .joystick-stick { transform: translate3d(-18px, 18px, 0); -webkit-transform: translate3d(-18px, 18px, 0); }
+
+        #joy-se:checked ~ .roblox-studio .camera-view { transform: rotateX(-35deg) rotateY(60deg) translate3d(-70px, -70px, 35px); -webkit-transform: rotateX(-35deg) rotateY(60deg) translate3d(-70px, -70px, 35px); }
+        #joy-se:checked ~ .joystick-zone .joystick-stick { transform: translate3d(18px, 18px, 0); -webkit-transform: translate3d(18px, 18px, 0); }
+    </style>
+</head>
+<body>
+
+    <form action="">
+        <!-- Регистраторы джойстика -->
+        <input type="radio" id="joy-c"  name="j-state" class="joy-trigger" checked>
+        <input type="radio" id="joy-n"  name="j-state" class="joy-trigger">
+        <input type="radio" id="joy-s"  name="j-state" class="joy-trigger">
+        <input type="radio" id="joy-w"  name="j-state" class="joy-trigger">
+        <input type="radio" id="joy-e"  name="j-state" class="joy-trigger">
+        <input type="radio" id="joy-nw" name="j-state" class="joy-trigger">
+        <input type="radio" id="joy-ne" name="j-state" class="joy-trigger">
+        <input type="radio" id="joy-sw" name="j-state" class="joy-trigger">
+        <input type="radio" id="joy-se" name="j-state" class="joy-trigger">
+
+        <!-- Верхняя панель (Логотип + Кнопка Чат-меню) -->
+        <div class="top-bar">
+            <span class="roblox-logo"></span>
+            <div class="chat-btn">
+                <span class="chat-icon"></span>
+            </div>
+        </div>
+
+        <!-- Кнопка прыжка (Jump) -->
+        <div class="jump-btn-zone">
+            <div class="jump-btn">
+                <span class="jump-icon"></span>
+            </div>
+        </div>
+
+        <!-- Игровой 3D Мир -->
+        <div class="roblox-studio">
+            <div class="camera-view">
+                <div class="baseplate">
+                    <!-- 3D Модель Нубика -->
+                    <div class="noob-character">
+                        <div class="limb n-head"></div>
+                        <div class="limb n-torso"></div>
+                        <div class="limb n-arm-l"></div>
+                        <div class="limb n-arm-r"></div>
+                        <div class="limb n-leg-l"></div>
+                        <div class="limb n-leg-r"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Виртуальный джойстик -->
+        <div class="joystick-zone">
+            <div class="joystick-base">
+                <div class="joystick-stick"></div>
+            </div>
+            <label for="joy-nw" class="touch-pad t-nw"></label>
+            <label for="joy-n"  class="touch-pad t-n"></label>
+            <label for="joy-ne" class="touch-pad t-ne"></label>
+            <label for="joy-w"  class="touch-pad t-w"></label>
+            <label for="joy-c"  class="touch-pad t-c"></label>
+            <label for="joy-e"  class="touch-pad t-e"></label>
+            <label for="joy-sw" class="touch-pad t-sw"></label>
+            <label for="joy-s"  class="touch-pad t-s"></label>
+            <label for="joy-se" class="touch-pad t-se"></label>
+        </div>
+
+    </form>
+
+</body>
+</html>
